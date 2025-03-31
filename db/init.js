@@ -11,6 +11,7 @@ if (!fs.existsSync(dirPath)) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
+// Inicializa o banco
 const db = new Database(dbPath);
 
 // Tabela de contatos (já existente)
@@ -24,7 +25,7 @@ db.exec(`
   );
 `);
 
-// Tabela de campanhas (novidade)
+// Tabela de campanhas
 db.exec(`
   CREATE TABLE IF NOT EXISTS campanhas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,6 +38,22 @@ db.exec(`
     agendado_em TEXT, -- Data/hora ISO
     status TEXT DEFAULT 'agendada', -- agendada | enviando | enviada | erro
     criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Tabela para controle de limite diário de envios
+db.exec(`
+  CREATE TABLE IF NOT EXISTS limites (
+    data TEXT PRIMARY KEY,     -- ex: '2025-03-31'
+    total INTEGER DEFAULT 0    -- total de envios nesse dia
+  );
+`);
+
+// Tabela de controle diário de envios
+db.exec(`
+  CREATE TABLE IF NOT EXISTS envios_diarios (
+    data TEXT PRIMARY KEY, -- YYYY-MM-DD
+    total INTEGER DEFAULT 0
   );
 `);
 
