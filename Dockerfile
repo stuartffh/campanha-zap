@@ -17,7 +17,7 @@ WORKDIR /app
 COPY --from=builder /app ./
 
 # Instala novamente em ambiente de produção (opcional para otimização)
-RUN npm install --omit=dev
+RUN npm install --force
 
 # Expõe a porta padrão do Next.js
 EXPOSE 3000
