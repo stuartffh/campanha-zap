@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY . .
 
-RUN npm install --legacy-peer-deps
+RUN npm install --force
 RUN npm run build
 
 # Etapa 2: Produção
