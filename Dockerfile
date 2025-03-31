@@ -1,30 +1,26 @@
-# Etapa 1: build
+# Etapa 1: Build
 FROM node:18-alpine AS builder
 
-# Define diretório de trabalho
 WORKDIR /app
 
-# Copia arquivos do projeto
 COPY package*.json ./
 COPY . .
 
-# Instala dependências e gera build de produção
 RUN npm install
 RUN npm run build
 
-# Etapa 2: produção
+# Etapa 2: Produção
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copia apenas os arquivos necessários da etapa de build
 COPY --from=builder /app ./
 
-# Expor porta padrão do Next.js
+# Instala novamente em ambiente de produção (opcional para otimização)
+RUN npm install --omit=dev
+
+# Expõe a porta padrão do Next.js
 EXPOSE 3000
 
-# Variáveis de ambiente (pode sobrescrever no painel)
-ENV NODE_ENV=production
-
-# Comando para iniciar a aplicação
-CMD ["npm", "start"]
+# Executa o script init.js e depois inicia o Next.js
+CMD node ./db/init.js && npm start

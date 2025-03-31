@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Caminho do banco de dados
-const dbPath = path.join(__dirname, 'contatos.db');
+const dbPath = path.join(__dirname, '/db/contatos.db');
 
 // Garante que a pasta existe
 const dirPath = path.dirname(dbPath);
