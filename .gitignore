@@ -19,6 +19,7 @@
 
 # production
 /build
+/db/contatos.db
 
 # misc
 .DS_Store
