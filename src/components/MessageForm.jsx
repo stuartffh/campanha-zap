@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
-import { FaRegSmile, FaTrashAlt, FaPaperclip } from 'react-icons/fa';
+import { FaRegSmile, FaTrashAlt, FaPaperclip, FaTelegramPlane } from 'react-icons/fa';
 
 export default function MessageForm({ contatos, contatosSelecionados }) {
   const [mensagem, setMensagem] = useState('');
@@ -11,6 +11,18 @@ export default function MessageForm({ contatos, contatosSelecionados }) {
   const [mostrarEmoji, setMostrarEmoji] = useState(false);
   const [logs, setLogs] = useState([]);
   const [executandoCampanha, setExecutandoCampanha] = useState(false);
+  const emojiPickerRef = useRef(null);
+
+  // Fecha o picker de emojis ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setMostrarEmoji(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleEmoji = (e) => setMensagem(mensagem + e.native);
 
@@ -100,11 +112,46 @@ export default function MessageForm({ contatos, contatosSelecionados }) {
   };
 
   return (
-    <div className="mt-4 p-4 border bg-card text-card-foreground rounded-lg shadow-sm transition-colors">
-      {/* Caixa de envio */}
-      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted shadow-sm">
+    <div className="mt-4 p-4 border bg-white rounded-2xl shadow-sm">
+      {/* Preview de Arquivo */}
+      {arquivo && (
+        <div className="relative mb-4 p-3 bg-gray-100 rounded-xl">
+          <div className="flex items-center gap-3">
+            {arquivo.type.startsWith('image/') && (
+              <img
+                src={URL.createObjectURL(arquivo)}
+                alt="Preview"
+                className="w-12 h-12 object-cover rounded-lg"
+              />
+            )}
+
+            {arquivo.type.startsWith('audio/') && (
+              <audio controls className="w-full">
+                <source src={URL.createObjectURL(arquivo)} type={arquivo.type} />
+              </audio>
+            )}
+
+            {arquivo.type.startsWith('application/') && (
+              <div className="flex items-center gap-2">
+                <FaPaperclip className="text-gray-600" />
+                <span className="text-sm text-gray-700">{arquivo.name}</span>
+              </div>
+            )}
+
+            <button
+              onClick={() => setArquivo(null)}
+              className="ml-auto p-1.5 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              <FaTrashAlt className="text-red-500 text-lg" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Caixa de Mensagem */}
+      <div className="relative">
         <textarea
-          className="w-full p-2 rounded-md border border-input bg-background text-foreground resize-none focus:ring-2 focus:ring-ring"
+          className="w-full p-3 pr-16 rounded-xl border-2 border-gray-200 bg-white text-gray-800 resize-none focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
           placeholder="Digite sua mensagem"
           rows={3}
           value={mensagem}
@@ -112,87 +159,63 @@ export default function MessageForm({ contatos, contatosSelecionados }) {
           disabled={executandoCampanha}
         />
 
-        <div className="flex flex-col items-center gap-2">
+        {/* Botões de Ação */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-2">
+          <label 
+            htmlFor="file-upload" 
+            className={`p-2 hover:bg-gray-100 rounded-full cursor-pointer ${executandoCampanha ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <FaPaperclip className="text-gray-500 text-xl" />
+          </label>
+          
           <button
             onClick={() => setMostrarEmoji(!mostrarEmoji)}
-            className="text-lg text-primary"
+            className={`p-2 hover:bg-gray-100 rounded-full ${executandoCampanha ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={executandoCampanha}
           >
-            <FaRegSmile />
+            <FaRegSmile className="text-gray-500 text-xl" />
           </button>
-
-          <label htmlFor="file-upload" className="text-lg text-primary cursor-pointer">
-            <FaPaperclip />
-          </label>
-          <input
-            id="file-upload"
-            type="file"
-            accept="image/*,audio/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            onChange={(e) => setArquivo(e.target.files[0])}
-            className="hidden"
-            disabled={executandoCampanha}
-          />
-        </div>
-      </div>
-
-      {mostrarEmoji && (
-        <div className="mt-2 max-w-sm">
-          <Picker data={data} onEmojiSelect={handleEmoji} />
-        </div>
-      )}
-
-      {/* Preview de Arquivo */}
-      {arquivo && (
-        <div className="relative mt-4">
-          {arquivo.type.startsWith('image/') && (
-            <img
-              src={URL.createObjectURL(arquivo)}
-              alt="Preview"
-              className="w-40 h-40 object-cover rounded border"
-            />
-          )}
-
-          {arquivo.type.startsWith('audio/') && (
-            <audio controls className="w-full mt-2">
-              <source src={URL.createObjectURL(arquivo)} type={arquivo.type} />
-              Seu navegador não suporta áudio.
-            </audio>
-          )}
-
-          {arquivo.type.startsWith('application/') && (
-            <div className="p-2 bg-muted rounded border text-sm flex justify-between items-center">
-              <span>{arquivo.name}</span>
-            </div>
-          )}
 
           <button
-            onClick={() => setArquivo(null)}
-            className="absolute top-0 right-0 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+            onClick={enviarCampanha}
+            disabled={enviando || executandoCampanha}
+            className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FaTrashAlt />
+            <FaTelegramPlane className="text-xl" />
           </button>
         </div>
-      )}
 
-      {/* Botão Enviar */}
-      <div className="mt-4">
-        <button
-          onClick={enviarCampanha}
-          disabled={enviando || executandoCampanha}
-          className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-        >
-          {enviando ? 'Enviando...' : 'Enviar Campanha'}
-        </button>
+        {/* Picker de Emojis */}
+        {mostrarEmoji && (
+          <div ref={emojiPickerRef} className="absolute bottom-14 right-0 z-10">
+            <Picker
+              data={data}
+              onEmojiSelect={handleEmoji}
+              theme="light"
+              previewPosition="none"
+              skinTonePosition="search"
+            />
+          </div>
+        )}
       </div>
 
+      <input
+        id="file-upload"
+        type="file"
+        accept="image/*,audio/*,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        onChange={(e) => setArquivo(e.target.files[0])}
+        className="hidden"
+        disabled={executandoCampanha}
+      />
+
       {/* Painel de Logs */}
-      <div className="mt-6 p-4 bg-muted border rounded shadow-sm max-h-[200px] overflow-y-auto">
-        <h3 className="text-sm font-semibold mb-2">📋 Logs da Campanha</h3>
+      <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-xl max-h-48 overflow-y-auto">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">📋 Logs da Campanha</h3>
         {logs.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Nenhuma mensagem enviada ainda.</p>
+          <p className="text-gray-400 text-sm">Nenhuma mensagem enviada ainda.</p>
         ) : (
           logs.map((log, i) => (
-            <p key={i} className="text-sm text-foreground">
+            <p key={i} className="text-sm text-gray-600 py-1 border-b border-gray-100 last:border-0">
               {log}
             </p>
           ))

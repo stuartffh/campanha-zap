@@ -86,7 +86,7 @@ export default function InstanceModal({ open, onClose, onStatusUpdate }) {
         {qrCode ? (
           <div className="flex justify-center">
             <div className="p-4 bg-white rounded-lg shadow-md border border-gray-300">
-              <QRCodeCanvas value={qrCode} size={400} />
+              <QRCodeCanvas value={qrCode} size={300} />
             </div>
           </div>
         ) : (
